@@ -93,7 +93,7 @@ public class HotSearchCrawlTask {
      */
     private void saveHotSearchRecords(List<HotSearchRecord> records) {
         if (records != null && !records.isEmpty()) {
-            hotSearchRecordRepository.saveAll(records);
+//            hotSearchRecordRepository.saveAll(records);
         }
     }
 } 

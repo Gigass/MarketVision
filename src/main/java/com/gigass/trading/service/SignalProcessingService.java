@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 
 import java.util.List;
 
@@ -32,8 +33,10 @@ public class SignalProcessingService {
         
         try {
             // 获取待处理的记录
-            List<HotSearchRecord> pendingRecords = hotSearchRecordRepository
-                .findByStatusOrderByCreatedTimeDesc(HotSearchRecord.ProcessStatus.PENDING);
+            QueryWrapper<HotSearchRecord> queryWrapper = new QueryWrapper<>();
+            queryWrapper.eq("status", HotSearchRecord.ProcessStatus.PENDING)
+                        .orderByDesc("created_time");
+            List<HotSearchRecord> pendingRecords = hotSearchRecordRepository.selectList(queryWrapper);
             
             for (HotSearchRecord record : pendingRecords) {
                 processSignalRecord(record);
@@ -55,7 +58,7 @@ public class SignalProcessingService {
         try {
             // 更新状态为处理中
             record.setStatus(HotSearchRecord.ProcessStatus.PROCESSING);
-            hotSearchRecordRepository.save(record);
+            hotSearchRecordRepository.updateById(record);
             
             // 执行信号捕捉与筛选
             SignalFilterResult result = signalCaptureFactory.executeSignalCapture(record);
@@ -72,7 +75,7 @@ public class SignalProcessingService {
             
             // 更新为失败状态
             record.setStatus(HotSearchRecord.ProcessStatus.FAILED);
-            hotSearchRecordRepository.save(record);
+            hotSearchRecordRepository.updateById(record);
             
             return null;
         }
@@ -93,6 +96,6 @@ public class SignalProcessingService {
             record.setStatus(HotSearchRecord.ProcessStatus.COMPLETED);
         }
         
-        hotSearchRecordRepository.save(record);
+        hotSearchRecordRepository.updateById(record);
     }
 }

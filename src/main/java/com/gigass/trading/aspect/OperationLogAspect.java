@@ -87,7 +87,7 @@ public class OperationLogAspect {
             operationLog.setOperationStatus("STARTED");
 
             // 保存操作日志
-            operationLogRepository.save(operationLog);
+            operationLogRepository.insert(operationLog);
 
             logger.debug("操作开始: {}.{}, 参数: {}", className, methodName, Arrays.toString(args));
         } catch (Exception e) {
@@ -116,7 +116,7 @@ public class OperationLogAspect {
             operationLog.setOperationStatus("COMPLETED");
 
             // 保存操作日志
-            operationLogRepository.save(operationLog);
+            operationLogRepository.insert(operationLog);
 
             logger.debug("操作完成: {}.{}, 结果: {}", className, methodName, result);
         } catch (Exception e) {
@@ -145,7 +145,7 @@ public class OperationLogAspect {
             operationLog.setOperationStatus("FAILED");
 
             // 保存操作日志
-            operationLogRepository.save(operationLog);
+            operationLogRepository.insert(operationLog);
 
             logger.error("操作异常: {}.{}, 异常: {}", className, methodName, exception.getMessage());
         } catch (Exception e) {

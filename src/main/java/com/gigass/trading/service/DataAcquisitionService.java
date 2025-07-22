@@ -60,10 +60,11 @@ public class DataAcquisitionService {
         try {
             List<HotSearchData> dataList = crawler.fetchHotSearchData(20);
             
-            for (HotSearchData data : dataList) {
-                // 转换并保存到数据库
-                HotSearchRecord record = convertToRecord(data);
-                hotSearchRecordRepository.save(record);
+            if (dataList != null && !dataList.isEmpty()) {
+                List<HotSearchRecord> records = dataList.stream()
+                        .map(this::convertToRecord)
+                        .toList();
+                hotSearchRecordRepository.insertBatch(records);
             }
             
             logger.info("平台 {} 数据采集完成，共采集 {} 条数据", platform, dataList.size());

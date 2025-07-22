@@ -1,47 +1,48 @@
 package com.gigass.trading.entity;
 
-import jakarta.persistence.*;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
 import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "hot_search_records")
+@TableName("hot_search_records")
 public class HotSearchRecord {
     
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @TableId(type = IdType.AUTO)
     private Long id;
     
-    @Column(nullable = false)
+    @TableField("source")
     private String source; // 数据源：douyin, weibo等
     
-    @Column(nullable = false, length = 500)
+    @TableField("title")
     private String title; // 热搜标题
     
-    @Column(columnDefinition = "TEXT")
+    @TableField("content")
     private String content; // 热搜内容
     
-    @Column(name = "heat_score")
+    @TableField("heat_score")
     private Integer heatScore; // 热度分数
     
-    @Column(name = "sentiment_score")
+    @TableField("sentiment_score")
     private Double sentimentScore; // 情感分数
     
-    @Column(name = "propagation_speed")
+    @TableField("propagation_speed")
     private Double propagationSpeed; // 传播速度
     
-    @Column(name = "verification_score")
+    @TableField("verification_score")
     private Double verificationScore; // 验证分数
     
-    @Column(name = "total_score")
+    @TableField("total_score")
     private Double totalScore; // 总分
     
-    @Column(name = "created_time")
+    @TableField("created_time")
     private LocalDateTime createdTime;
     
-    @Column(name = "updated_time")
+    @TableField("updated_time")
     private LocalDateTime updatedTime;
     
-    @Enumerated(EnumType.STRING)
+    @TableField("status")
     private ProcessStatus status; // 处理状态
     
     // 构造函数、getter、setter

@@ -40,12 +40,12 @@ public class SignalController {
     @PostMapping("/process/{recordId}")
     public ResponseEntity<SignalFilterResult> processRecord(@PathVariable Long recordId) {
         try {
-            Optional<HotSearchRecord> recordOpt = hotSearchRecordRepository.findById(recordId);
-            if (recordOpt.isEmpty()) {
+            HotSearchRecord record = hotSearchRecordRepository.selectById(recordId);
+            if (record == null) {
                 return ResponseEntity.notFound().build();
             }
             
-            SignalFilterResult result = signalProcessingService.processSignalRecord(recordOpt.get());
+            SignalFilterResult result = signalProcessingService.processSignalRecord(record);
             return ResponseEntity.ok(result);
             
         } catch (Exception e) {

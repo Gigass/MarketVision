@@ -1,59 +1,52 @@
 package com.gigass.trading.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Lob;
-import jakarta.persistence.Table;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
 import java.time.LocalDateTime;
 
 /**
  * 操作日志实体类
  * 用于记录系统中的所有操作
  */
-@Entity
-@Table(name = "operation_log")
+@TableName("operation_log")
 public class OperationLog {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @TableId(type = IdType.AUTO)
     private Long id;
 
-    @Column(name = "operation_type", nullable = false, length = 50)
+    @TableField("operation_type")
     private String operationType;
 
-    @Column(name = "operation_description", nullable = false)
+    @TableField("operation_description")
     private String operationDescription;
 
-    @Column(name = "operation_time", nullable = false)
+    @TableField("operation_time")
     private LocalDateTime operationTime;
 
-    @Lob
-    @Column(name = "operation_params")
+    @TableField("operation_params")
     private String operationParams;
 
-    @Lob
-    @Column(name = "operation_result")
+    @TableField("operation_result")
     private String operationResult;
 
-    @Column(name = "operation_ip", length = 50)
+    @TableField("operation_ip")
     private String operationIp;
 
-    @Column(name = "operation_url")
+    @TableField("operation_url")
     private String operationUrl;
 
-    @Column(name = "http_method", length = 10)
+    @TableField("http_method")
     private String httpMethod;
 
-    @Column(name = "operation_status", length = 20)
+    @TableField("operation_status")
     private String operationStatus;
 
-    @Column(name = "user_id")
+    @TableField("user_id")
     private Long userId;
 
-    @Column(name = "user_name", length = 100)
+    @TableField("user_name")
     private String userName;
 
     public Long getId() {

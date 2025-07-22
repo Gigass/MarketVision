@@ -1,45 +1,46 @@
 package com.gigass.trading.entity;
 
-import jakarta.persistence.*;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "stock_info")
+@TableName("stock_info")
 public class StockInfo {
     
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @TableId(type = IdType.AUTO)
     private Long id;
     
-    @Column(name = "stock_code", nullable = false, unique = true)
+    @TableField("stock_code")
     private String stockCode; // 股票代码
     
-    @Column(name = "stock_name", nullable = false)
+    @TableField("stock_name")
     private String stockName; // 股票名称
     
-    @Column(name = "market")
+    @TableField("market")
     private String market; // 市场：SH, SZ
     
-    @Column(name = "industry")
+    @TableField("industry")
     private String industry; // 行业
     
-    @Column(name = "concept", columnDefinition = "TEXT")
+    @TableField("concept")
     private String concept; // 概念，JSON格式存储
     
-    @Column(name = "current_price", precision = 10, scale = 2)
+    @TableField("current_price")
     private BigDecimal currentPrice; // 当前价格
     
-    @Column(name = "market_cap", precision = 15, scale = 2)
+    @TableField("market_cap")
     private BigDecimal marketCap; // 市值
     
-    @Column(name = "is_active")
+    @TableField("is_active")
     private Boolean isActive = true; // 是否活跃
     
-    @Column(name = "created_time")
+    @TableField("created_time")
     private LocalDateTime createdTime;
     
-    @Column(name = "updated_time")
+    @TableField("updated_time")
     private LocalDateTime updatedTime;
     
     public StockInfo() {

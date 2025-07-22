@@ -1,17 +1,17 @@
 package com.gigass;
 
+import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * 热搜驱动交易系统主启动类
- * 负责启动整个应用程序
- */
-@SpringBootApplication
+@SpringBootApplication(exclude = {
+    org.springframework.ai.autoconfigure.vertexai.gemini.VertexAiGeminiAutoConfiguration.class
+})
 @ComponentScan(basePackages = {"com.gigass.trading", "com.gigass.ai"})
+@MapperScan("com.gigass.trading.repository")
 public class MarketVisionApplication {
 
     private static final Logger logger = LoggerFactory.getLogger(MarketVisionApplication.class);
