@@ -50,7 +50,51 @@ public class HotSearchRecord {
         this.updatedTime = LocalDateTime.now();
         this.status = ProcessStatus.PENDING;
     }
-    
+
+    public String getKeyword() {
+        return this.title;
+    }
+
+    public void setSource(String source) {
+        this.source = source;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
+    }
+
+    public void setHeatScore(Integer heatScore) {
+        this.heatScore = heatScore;
+    }
+
+    public void setStatus(ProcessStatus status) {
+        this.status = status;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setSentimentScore(Double sentimentScore) {
+        this.sentimentScore = sentimentScore;
+    }
+
+    public void setPropagationSpeed(Double propagationSpeed) {
+        this.propagationSpeed = propagationSpeed;
+    }
+
+    public void setVerificationScore(Double verificationScore) {
+        this.verificationScore = verificationScore;
+    }
+
+    public void setTotalScore(Double totalScore) {
+        this.totalScore = totalScore;
+    }
+
     // TODO: 添加完整的getter/setter方法
     
     public enum ProcessStatus {

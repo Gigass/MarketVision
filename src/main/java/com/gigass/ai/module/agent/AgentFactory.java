@@ -59,4 +59,35 @@ public class AgentFactory {
         // TODO: 实现学习智能体创建逻辑
         return null;
     }
-} 
+
+    /**
+     * 创建信号筛选智能体
+     * @param record 热搜记录
+     * @return 筛选结果
+     */
+    public Object createSignalFilteringAgent(Object record) {
+        // TODO: 实现信号筛选智能体逻辑
+        return true; // 临时返回
+    }
+
+    /**
+     * 创建关联分析智能体
+     * @param record 热搜记录
+     * @return 最佳股票
+     */
+    public Object createCorrelationAnalysisAgent(Object record) {
+        // TODO: 实现关联分析智能体逻辑
+        return "000001"; // 临时返回
+    }
+
+    /**
+     * 创建风险评估智能体
+     * @param record 热搜记录
+     * @param stock 股票代码
+     * @return 风险评估结果
+     */
+    public Object createRiskAssessmentAgent(Object record, Object stock) {
+        // TODO: 实现风险评估智能体逻辑
+        return true; // 临时返回
+    }
+}

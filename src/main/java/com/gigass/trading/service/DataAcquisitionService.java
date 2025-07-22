@@ -87,6 +87,12 @@ public class DataAcquisitionService {
         return record;
     }
     
+    public Object acquireData(Object crawler) {
+        // TODO: Implement data acquisition logic using the provided crawler
+        System.out.println("Acquiring data...");
+        return new java.util.ArrayList<HotSearchRecord>();
+    }
+
     /**
      * 手动触发数据采集
      */
