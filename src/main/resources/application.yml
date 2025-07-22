@@ -1,0 +1,124 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: hotsearch-trading-system
+  
+  # 数据库配置
+  datasource:
+    url: jdbc:mysql://localhost:3306/trading_system?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:password}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        format_sql: true
+  
+  # Redis配置
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      database: 0
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+  
+  # 缓存配置
+  cache:
+    type: redis
+    redis:
+      time-to-live: 600000
+  
+  # AI配置
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY:your-openai-api-key}
+      base-url: ${OPENAI_BASE_URL:https://api.openai.com}
+      chat:
+        options:
+          model: gpt-3.5-turbo
+          temperature: 0.7
+    
+    vertex:
+      ai:
+        gemini:
+          project-id: ${GOOGLE_CLOUD_PROJECT_ID:your-project-id}
+          location: ${GOOGLE_CLOUD_LOCATION:us-central1}
+          chat:
+            options:
+              model: gemini-pro
+              temperature: 0.7
+    
+    anthropic:
+      api-key: ${ANTHROPIC_API_KEY:your-anthropic-api-key}
+      base-url: ${ANTHROPIC_BASE_URL:https://api.anthropic.com}
+      chat:
+        options:
+          model: claude-3-sonnet-20240229
+          temperature: 0.7
+
+# 系统配置
+trading:
+  system:
+    # RSS数据源配置 - 统一配置不同平台
+    rss:
+      sources:
+        - name: douyin
+          url: http://localhost:6688/douyin?limit=20&cache=false&rss=true
+          enabled: true
+        - name: weibo
+          url: http://localhost:6688/weibo?limit=20&cache=false&rss=true
+          enabled: true
+        - name: zhihu
+          url: http://localhost:6688/zhihu?limit=20&cache=false&rss=true
+          enabled: false
+        - name: bilibili
+          url: http://localhost:6688/bilibili?limit=20&cache=false&rss=true
+          enabled: false
+      fetch-interval: 60000 # 60秒
+    
+    # 信号筛选配置
+    signal:
+      heat-threshold: 75
+      sentiment-threshold: 70
+      speed-threshold: 80
+      verification-threshold: 75
+      total-threshold: 300
+    
+    # 交易配置
+    trading:
+      max-position-size: 0.1 # 最大仓位10%
+      stop-loss-ratio: 0.05 # 止损5%
+      take-profit-ratio: 0.15 # 止盈15%
+      max-concurrent-trades: 3
+
+# 日志配置
+logging:
+  level:
+    com.jolywood: DEBUG
+    org.springframework.ai: DEBUG
+    org.springframework.data.jpa: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+# 监控配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
