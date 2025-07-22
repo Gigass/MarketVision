@@ -132,9 +132,14 @@ public class OperationLogAspect {
     /**
      * 异常通知：方法抛出异常后记录日志到 Elasticsearch
      */
-    @AfterThrowing(pointcut = "controllerPointcut() || servicePointcut() || modulePointcut()", throwing = "exception")
-    public void doAfterThrowing(JoinPoint joinPoint, Throwable exception) {
+    @AfterThrowing(pointcut = "operationLogPointcut()", throwing = "ex")
+    public void doAfterThrowing(JoinPoint joinPoint, Throwable ex) {
         try {
+            // 避免对LogService本身进行日志记录，防止无限递归
+            if (joinPoint.getTarget().getClass().getSimpleName().contains("LogService")) {
+                return;
+            }
+            
             // 获取方法签名
             MethodSignature signature = (MethodSignature) joinPoint.getSignature();
             Method method = signature.getMethod();
@@ -145,16 +150,17 @@ public class OperationLogAspect {
             logService.logOperation(
                 "METHOD_EXCEPTION",
                 className + "." + methodName,
-                exception.getMessage(),
+                ex.getMessage(),
                 "unknown",
                 "unknown",
                 "unknown",
                 "FAILED"
             );
 
-            logger.error("操作异常: {}.{}, 异常: {}", className, methodName, exception.getMessage());
+            logger.error("操作异常: {}.{}, 异常: {}", className, methodName, ex.getMessage());
         } catch (Exception e) {
-            logger.error("记录操作日志失败", e);
+            // 静默处理，避免影响主业务
+            System.err.println("日志记录失败: " + e.getMessage());
         }
     }
 

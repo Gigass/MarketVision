@@ -29,11 +29,11 @@ public class GeminiTestDemo implements CommandLineRunner {
         // 测试1: 简单问答
         testSimpleChat();
         
-        // 测试2: 股票分析相关
-        testStockAnalysis();
-        
-        // 测试3: 热搜分析相关
-        testHotSearchAnalysis();
+//        // 测试2: 股票分析相关
+//        testStockAnalysis();
+//
+//        // 测试3: 热搜分析相关
+//        testHotSearchAnalysis();
         
         System.out.println("=== Gemini API 测试完成 ===");
     }

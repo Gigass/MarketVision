@@ -26,7 +26,7 @@ spring:
   ai:
     openai:
       api-key: sk-7f9Ww05vQRwWJuAJAF7FFQAnMTm3VBWBIr4IQQrYVmBe2flc
-      base-url: https://max.brother99.top/v1
+      base-url: https://max.brother99.top
       chat:
         options:
           model: "[满血伪流]gemini-2.5-pro-search"
@@ -47,29 +47,33 @@ server:
   servlet:
     context-path: /api
 
-# 日志配置 - 输出到 Elasticsearch
+# 日志配置 - 减少控制台输出
 logging:
   level:
-    org.springframework: DEBUG
-    com.gigass: DEBUG
-    com.gigass.trading.repository: DEBUG
-    org.springframework.web: INFO
-    org.hibernate: INFO
+    root: INFO
+    org.springframework: INFO
+    com.gigass: INFO
+    com.gigass.trading.repository: INFO
+    org.springframework.web: WARN
+    org.hibernate: WARN
+    org.springframework.boot.autoconfigure: WARN
+    org.springframework.beans.factory: WARN
+    com.internetitem.logback.elasticsearch: WARN
   pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
-debug: true
+    console: "%d{HH:mm:ss} %-5level %logger{20} - %msg%n"
+debug: false
 
 # 热搜采集配置
 hotsearch:
   crawler:
     weibo:
-      url: https://s.weibo.com/top/summary
+      url: http://localhost:6688/weibo
       interval: 600000  # 10分钟
     baidu:
-      url: https://top.baidu.com/board?tab=realtime
+      url: http://localhost:6688/baidu
       interval: 600000  # 10分钟
     zhihu:
-      url: https://www.zhihu.com/hot
+      url: http://localhost:6688/zhihu
       interval: 600000  # 10分钟
 
 # 监控配置
