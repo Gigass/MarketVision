@@ -1,117 +1,91 @@
-server:
-  port: 8080
-
 spring:
   application:
-    name: hotsearch-trading-system
+    name: market-vision
   
   # 数据库配置
   datasource:
-    url: jdbc:mysql://localhost:3306/trading_system?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai
-    username: ${DB_USERNAME:root}
-    password: ${DB_PASSWORD:password}
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    
+    # 默认使用H2内存数据库，便于开发和测试
+    url: jdbc:h2:mem:marketvision;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password: 
+    driver-class-name: org.h2.Driver
+    # 如需切换到MySQL，取消下面的注释并注释上面的H2配置
+    # url: jdbc:mysql://localhost:3306/marketvision?useSSL=false&serverTimezone=UTC&characterEncoding=UTF-8
+    # username: root
+    # password: root
+    # driver-class-name: com.mysql.cj.jdbc.Driver
+  
+  # JPA配置
   jpa:
     hibernate:
       ddl-auto: update
     show-sql: true
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.MySQL8Dialect
         format_sql: true
+        dialect: org.hibernate.dialect.H2Dialect
+        # MySQL方言，切换到MySQL时使用
+        # dialect: org.hibernate.dialect.MySQL8Dialect
+  
+  # H2控制台配置
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
   
   # Redis配置
   data:
     redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
-      password: ${REDIS_PASSWORD:}
+      host: localhost
+      port: 6379
+      # password: 
       database: 0
-      timeout: 2000ms
-      lettuce:
-        pool:
-          max-active: 8
-          max-idle: 8
-          min-idle: 0
   
-  # 缓存配置
-  cache:
-    type: redis
-    redis:
-      time-to-live: 600000
-  
-  # AI配置
+  # AI模型配置
   ai:
     openai:
-      api-key: ${OPENAI_API_KEY:your-openai-api-key}
+      api-key: ${OPENAI_API_KEY:your-api-key}
       base-url: ${OPENAI_BASE_URL:https://api.openai.com}
-      chat:
-        options:
-          model: gpt-3.5-turbo
-          temperature: 0.7
-    
-    vertex:
-      ai:
-        gemini:
-          project-id: ${GOOGLE_CLOUD_PROJECT_ID:your-project-id}
-          location: ${GOOGLE_CLOUD_LOCATION:us-central1}
-          chat:
-            options:
-              model: gemini-pro
-              temperature: 0.7
-    
+      model: gpt-4-turbo-preview
     anthropic:
-      api-key: ${ANTHROPIC_API_KEY:your-anthropic-api-key}
-      base-url: ${ANTHROPIC_BASE_URL:https://api.anthropic.com}
-      chat:
-        options:
-          model: claude-3-sonnet-20240229
-          temperature: 0.7
+      api-key: ${ANTHROPIC_API_KEY:your-api-key}
+      model: claude-3-opus-20240229
+    vertex-ai:
+      project-id: ${VERTEX_AI_PROJECT_ID:your-project-id}
+      location: ${VERTEX_AI_LOCATION:us-central1}
+      model: gemini-1.5-pro
 
-# 系统配置
-trading:
-  system:
-    # RSS数据源配置 - 统一配置不同平台
-    rss:
-      sources:
-        - name: douyin
-          url: http://localhost:6688/douyin?limit=20&cache=false&rss=true
-          enabled: true
-        - name: weibo
-          url: http://localhost:6688/weibo?limit=20&cache=false&rss=true
-          enabled: true
-        - name: zhihu
-          url: http://localhost:6688/zhihu?limit=20&cache=false&rss=true
-          enabled: false
-        - name: bilibili
-          url: http://localhost:6688/bilibili?limit=20&cache=false&rss=true
-          enabled: false
-      fetch-interval: 60000 # 60秒
-    
-    # 信号筛选配置
-    signal:
-      heat-threshold: 75
-      sentiment-threshold: 70
-      speed-threshold: 80
-      verification-threshold: 75
-      total-threshold: 300
-    
-    # 交易配置
-    trading:
-      max-position-size: 0.1 # 最大仓位10%
-      stop-loss-ratio: 0.05 # 止损5%
-      take-profit-ratio: 0.15 # 止盈15%
-      max-concurrent-trades: 3
+# 服务器配置
+server:
+  port: 8080
+  servlet:
+    context-path: /api
 
 # 日志配置
 logging:
   level:
+    root: INFO
     com.gigass: DEBUG
-    org.springframework.ai: DEBUG
-    org.springframework.data.jpa: DEBUG
+    org.springframework.web: INFO
+    org.hibernate: INFO
+  file:
+    name: logs/market-vision.log
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+# 热搜采集配置
+hotsearch:
+  crawler:
+    weibo:
+      url: https://s.weibo.com/top/summary
+      interval: 600000  # 10分钟
+    baidu:
+      url: https://top.baidu.com/board?tab=realtime
+      interval: 600000  # 10分钟
+    zhihu:
+      url: https://www.zhihu.com/hot
+      interval: 600000  # 10分钟
 
 # 监控配置
 management:
