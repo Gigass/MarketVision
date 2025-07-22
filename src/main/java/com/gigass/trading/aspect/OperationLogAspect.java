@@ -112,25 +112,36 @@ public class OperationLogAspect {
      */
     @AfterReturning(pointcut = "controllerPointcut() || servicePointcut() || modulePointcut()", returning = "result")
     public void doAfterReturning(JoinPoint joinPoint, Object result) {
+        // 避免递归和测试代码
+        String className = joinPoint.getTarget().getClass().getName();
+        if (className.contains("LogService") || 
+            className.contains("Demo") || 
+            className.contains("Repository") ||
+            className.contains("Test") ||
+            className.contains("Scheduling")) {  // 添加定时任务排除
+            return;
+        }
+        String methodName ="";
         try {
-            // 获取方法签名
-            MethodSignature signature = (MethodSignature) joinPoint.getSignature();
-            Method method = signature.getMethod();
-            String className = joinPoint.getTarget().getClass().getName();
-            String methodName = method.getName();
+            // 只记录重要的业务操作
+            if (isImportantOperation(joinPoint)) {
+                // 获取方法签名
+                MethodSignature signature = (MethodSignature) joinPoint.getSignature();
+                Method method = signature.getMethod();
+                methodName = method.getName();
 
-            // 只记录到 Elasticsearch
-            logService.logOperation(
-                "METHOD_SUCCESS",
-                className + "." + methodName,
-                result != null ? result.toString() : "null",
-                "unknown",
-                "unknown",
-                "unknown",
-                "SUCCESS"
-            );
-
-            logger.debug("操作成功: {}.{}, 返回: {}", className, methodName, result);
+                logService.logOperation(
+                    "METHOD_SUCCESS",
+                    className + "." + methodName,
+                    result != null ? result.toString() : "null",
+                    "unknown",
+                    "unknown", 
+                    "unknown",
+                    "SUCCESS"
+                );
+            }
+            
+            logger.trace("操作成功: {}.{}", className, methodName);
         } catch (Exception e) {
             logger.error("记录操作日志失败", e);
         }
