@@ -107,7 +107,7 @@ trading:
 # 日志配置
 logging:
   level:
-    com.jolywood: DEBUG
+    com.gigass: DEBUG
     org.springframework.ai: DEBUG
     org.springframework.data.jpa: DEBUG
   pattern:
