@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    
+    <!-- 控制台输出 -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+    
+    <!-- Elasticsearch 输出 -->
+    <appender name="ELASTICSEARCH" class="com.internetitem.logback.elasticsearch.ElasticsearchAppender">
+        <url>http://localhost:9200/_bulk</url>
+        <index>market-vision-logs-%date{yyyy-MM-dd}</index>
+        <type>_doc</type>
+        <headers>
+            <header>
+                <name>Content-Type</name>
+                <value>application/json</value>
+            </header>
+        </headers>
+        <loggerName>true</loggerName>
+        <severityField>level</severityField>
+        <hostField>host</hostField>
+        <timestampField>@timestamp</timestampField>
+        <includeCallerData>true</includeCallerData>
+        
+        <!-- 自定义字段 -->
+        <customFields>{"application":"market-vision"}</customFields>
+        
+        <!-- 异步处理 -->
+        <maxQueueSize>104857600</maxQueueSize>
+        <maxElasticsearchBulkSize>100</maxElasticsearchBulkSize>
+        <maxFlushInactivityTime>30</maxFlushInactivityTime>
+        
+        <!-- 错误处理 -->
+        <errorLoggerName>es-error-logger</errorLoggerName>
+        
+        <!-- JSON 格式化 -->
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <timestamp/>
+                <logLevel/>
+                <loggerName/>
+                <message/>
+                <mdc/>
+                <arguments/>
+                <stackTrace/>
+            </providers>
+        </encoder>
+    </appender>
+    
+    <!-- 异步 Elasticsearch 输出 -->
+    <appender name="ASYNC_ELASTICSEARCH" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="ELASTICSEARCH"/>
+        <queueSize>1024</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <includeCallerData>true</includeCallerData>
+    </appender>
+    
+    <!-- Root Logger -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="ASYNC_ELASTICSEARCH"/>
+    </root>
+    
+    <!-- 应用特定日志级别 -->
+    <logger name="com.gigass" level="DEBUG"/>
+    <logger name="com.gigass.trading.repository" level="DEBUG"/>
+    
+    <!-- Elasticsearch 错误日志 -->
+    <logger name="es-error-logger" level="DEBUG" additivity="false">
+        <appender-ref ref="CONSOLE"/>
+    </logger>
+    
+</configuration>

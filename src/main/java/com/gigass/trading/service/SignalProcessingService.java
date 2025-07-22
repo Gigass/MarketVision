@@ -3,7 +3,7 @@ package com.gigass.trading.service;
 import com.gigass.trading.factory.SignalCaptureFactory;
 import com.gigass.trading.dto.SignalFilterResult;
 import com.gigass.trading.entity.HotSearchRecord;
-import com.gigass.trading.repository.HotSearchRecordRepository;
+import com.gigass.trading.mapper.HotSearchRecordRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

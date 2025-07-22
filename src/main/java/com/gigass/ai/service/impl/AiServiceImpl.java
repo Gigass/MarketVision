@@ -22,11 +22,12 @@ public class AiServiceImpl implements AiService {
     @Autowired(required = false)
     private OpenAiChatModel openAiChatModel;
     
-    @Autowired(required = false)
-    private VertexAiGeminiChatModel geminiChatModel;
+    // 移除这两个依赖，因为我们不使用官方的 Vertex AI 和 Anthropic
+    // @Autowired(required = false)
+    // private VertexAiGeminiChatModel geminiChatModel;
     
-    @Autowired(required = false)
-    private AnthropicChatModel anthropicChatModel;
+    // @Autowired(required = false)
+    // private AnthropicChatModel anthropicChatModel;
 
     @Override
     public ChatResponse chat(ChatRequest request) {
@@ -62,9 +63,8 @@ public class AiServiceImpl implements AiService {
     
     private ChatModel getChatModel(AiModelEnum modelEnum) {
         return switch (modelEnum) {
-            case OPENAI -> openAiChatModel;
-            case GEMINI -> geminiChatModel;
-            case CLAUDE -> anthropicChatModel;
+            case OPENAI, GEMINI -> openAiChatModel; // 统一使用 OpenAI 客户端
+            case CLAUDE -> null; // 暂时不支持
         };
     }
 }

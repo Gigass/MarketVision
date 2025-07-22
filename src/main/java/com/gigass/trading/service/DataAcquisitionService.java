@@ -4,7 +4,7 @@ import com.gigass.trading.dto.HotSearchData;
 import com.gigass.trading.entity.HotSearchRecord;
 import com.gigass.trading.module.acquisition.SocialMediaCrawlerFactory;
 import com.gigass.trading.module.acquisition.SocialMediaCrawler;
-import com.gigass.trading.repository.HotSearchRecordRepository;
+import com.gigass.trading.mapper.HotSearchRecordRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,27 +28,10 @@ public class DataAcquisitionService {
     /**
      * 定时数据采集任务
      */
-    @Scheduled(fixedDelayString = "${trading.system.rss.fetch-interval:60000}")
+    // 临时禁用这个定时任务，使用HotSearchCrawlTask代替
+    // @Scheduled(fixedDelayString = "${trading.system.rss.fetch-interval:60000}")
     public void scheduledDataCollection() {
-        logger.info("开始定时数据采集任务");
-        
-        try {
-            Map<String, SocialMediaCrawler> crawlers = crawlerFactory.getAllCrawlers();
-            
-            for (Map.Entry<String, SocialMediaCrawler> entry : crawlers.entrySet()) {
-                String platform = entry.getKey();
-                SocialMediaCrawler crawler = entry.getValue();
-                
-                if (crawler.isAvailable()) {
-                    collectDataFromPlatform(platform, crawler);
-                } else {
-                    logger.warn("平台 {} 当前不可用，跳过采集", platform);
-                }
-            }
-            
-        } catch (Exception e) {
-            logger.error("定时数据采集任务失败: {}", e.getMessage(), e);
-        }
+        // 方法保留但不执行定时调度
     }
     
     /**

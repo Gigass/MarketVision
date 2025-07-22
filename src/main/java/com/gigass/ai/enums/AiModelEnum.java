@@ -2,7 +2,7 @@ package com.gigass.ai.enums;
 
 public enum AiModelEnum {
     OPENAI("openai", "OpenAI GPT"),
-    GEMINI("gemini", "Google Gemini"),
+    GEMINI("gemini", "Gemini 2.5 Pro Search"),
     CLAUDE("claude", "Anthropic Claude");
 
     private final String code;

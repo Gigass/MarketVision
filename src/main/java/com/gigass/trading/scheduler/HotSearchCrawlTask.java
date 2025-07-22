@@ -3,7 +3,7 @@ package com.gigass.trading.scheduler;
 import com.gigass.trading.entity.HotSearchRecord;
 import com.gigass.trading.module.acquisition.SocialMediaCrawlerFactory;
 import com.gigass.trading.module.base.HotsearchProcessor;
-import com.gigass.trading.repository.HotSearchRecordRepository;
+import com.gigass.trading.mapper.HotSearchRecordRepository;
 import com.gigass.trading.service.DataAcquisitionService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

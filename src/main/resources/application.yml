@@ -2,46 +2,62 @@ spring:
   application:
     name: market-vision
   
+  # Elasticsearch 配置
+  elasticsearch:
+    uris: http://localhost:9200
+    connection-timeout: 5s
+    socket-timeout: 30s
+    rest-client:
+      read-timeout: 30s
+  
   # 数据库配置
   datasource:
-    # 默认使用H2内存数据库，便于开发和测试
-    url: jdbc:p6spy:h2:mem:marketvision;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-    username: sa
-    password: 
+    url: jdbc:p6spy:mysql://localhost:3306/marketvision?useSSL=false&serverTimezone=UTC&characterEncoding=UTF-8&allowPublicKeyRetrieval=true
+    username: root
+    password: 1008610086
     driver-class-name: com.p6spy.engine.spy.P6SpyDriver
-  
-  # H2控制台配置
-  h2:
-    console:
-      enabled: true
-      path: /h2-console
-  
-  # AI模型配置
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
   ai:
     openai:
-      api-key: ${OPENAI_API_KEY:your-api-key}
-      base-url: ${OPENAI_BASE_URL:https://api.openai.com}
-      model: gpt-4-turbo-preview
+      api-key: sk-7f9Ww05vQRwWJuAJAF7FFQAnMTm3VBWBIr4IQQrYVmBe2flc
+      base-url: https://max.brother99.top/v1
+      chat:
+        options:
+          model: "[满血伪流]gemini-2.5-pro-search"
+    vertex:
+      ai:
+        gemini:
+          enabled: false
+    anthropic:
+      enabled: false
+  autoconfigure:
+    exclude:
+      - org.springframework.ai.autoconfigure.vertexai.gemini.VertexAiGeminiAutoConfiguration
+      - org.springframework.ai.autoconfigure.anthropic.AnthropicAutoConfiguration
 
 # 服务器配置
 server:
-  port: 8080
+  port: 8091
   servlet:
     context-path: /api
 
-# 日志配置
+# 日志配置 - 输出到 Elasticsearch
 logging:
   level:
-    root: INFO
+    org.springframework: DEBUG
     com.gigass: DEBUG
     com.gigass.trading.repository: DEBUG
     org.springframework.web: INFO
     org.hibernate: INFO
-  file:
-    name: logs/market-vision.log
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
-    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+debug: true
 
 # 热搜采集配置
 hotsearch:
@@ -75,3 +91,13 @@ mybatis-plus:
   configuration:
     map-underscore-to-camel-case: true
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+# 雪花算法配置
+snowflake:
+  worker-id: 1      # 工作机器ID (0-31)
+  datacenter-id: 1  # 数据中心ID (0-31)
+
+# Demo 控制开关
+demo:
+  lifecycle:
+    enabled: false  # 设为 true 时启用

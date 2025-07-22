@@ -1,7 +1,6 @@
 package com.gigass.trading.aspect;
 
-import com.gigass.trading.entity.OperationLog;
-import com.gigass.trading.repository.OperationLogRepository;
+import com.gigass.trading.service.LogService;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.AfterReturning;
 import org.aspectj.lang.annotation.AfterThrowing;
@@ -32,21 +31,19 @@ public class OperationLogAspect {
     private static final Logger logger = LoggerFactory.getLogger(OperationLogAspect.class);
 
     @Autowired
-    private OperationLogRepository operationLogRepository;
+    private LogService logService;
 
     /**
      * 定义切点 - 所有controller包下的方法
      */
-    @Pointcut("execution(* com.gigass.*.controller.*.*(..))")
-    public void controllerPointcut() {
-    }
+    @Pointcut("execution(* com.gigass.trading.controller..*(..))")
+    public void controllerPointcut() {}
 
     /**
      * 定义切点 - 所有service包下的方法
      */
-    @Pointcut("execution(* com.gigass.*.service.*.*(..))")
-    public void servicePointcut() {
-    }
+    @Pointcut("execution(* com.gigass.trading.service..*(..))")
+    public void servicePointcut() {}
 
     /**
      * 定义切点 - 所有module包下的方法
@@ -56,11 +53,22 @@ public class OperationLogAspect {
     }
 
     /**
-     * 前置通知：在方法执行前记录日志
+     * 定义切点 - 使用了 OperationLog 注解的方法
      */
-    @Before("controllerPointcut() || servicePointcut() || modulePointcut()")
+    @Pointcut("@annotation(com.gigass.trading.annotation.OperationLog)")
+    public void operationLogPointcut() {}
+
+    /**
+     * 前置通知：在方法执行前记录日志到 Elasticsearch
+     */
+    @Before("operationLogPointcut()")
     public void doBefore(JoinPoint joinPoint) {
         try {
+            // 避免递归调用
+            if (joinPoint.getTarget() instanceof LogService) {
+                return;
+            }
+
             // 获取请求信息
             ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
             HttpServletRequest request = attributes != null ? attributes.getRequest() : null;
@@ -75,19 +83,16 @@ public class OperationLogAspect {
             String methodName = method.getName();
             Object[] args = joinPoint.getArgs();
 
-            // 记录操作日志
-            OperationLog operationLog = new OperationLog();
-            operationLog.setOperationType("METHOD_CALL");
-            operationLog.setOperationDescription(className + "." + methodName);
-            operationLog.setOperationTime(LocalDateTime.now());
-            operationLog.setOperationParams(Arrays.toString(args));
-            operationLog.setOperationIp(ip);
-            operationLog.setOperationUrl(url);
-            operationLog.setHttpMethod(httpMethod);
-            operationLog.setOperationStatus("STARTED");
-
-            // 保存操作日志
-            operationLogRepository.insert(operationLog);
+            // 只记录到 Elasticsearch
+            logService.logOperation(
+                "METHOD_CALL",
+                className + "." + methodName,
+                Arrays.toString(args),
+                ip,
+                url,
+                httpMethod,
+                "STARTED"
+            );
 
             logger.debug("操作开始: {}.{}, 参数: {}", className, methodName, Arrays.toString(args));
         } catch (Exception e) {
@@ -96,7 +101,7 @@ public class OperationLogAspect {
     }
 
     /**
-     * 返回通知：方法正常返回后记录日志
+     * 返回通知：方法正常返回后记录日志到 Elasticsearch
      */
     @AfterReturning(pointcut = "controllerPointcut() || servicePointcut() || modulePointcut()", returning = "result")
     public void doAfterReturning(JoinPoint joinPoint, Object result) {
@@ -107,25 +112,25 @@ public class OperationLogAspect {
             String className = joinPoint.getTarget().getClass().getName();
             String methodName = method.getName();
 
-            // 记录操作日志
-            OperationLog operationLog = new OperationLog();
-            operationLog.setOperationType("METHOD_RETURN");
-            operationLog.setOperationDescription(className + "." + methodName);
-            operationLog.setOperationTime(LocalDateTime.now());
-            operationLog.setOperationResult(result != null ? result.toString() : "void");
-            operationLog.setOperationStatus("COMPLETED");
+            // 只记录到 Elasticsearch
+            logService.logOperation(
+                "METHOD_SUCCESS",
+                className + "." + methodName,
+                result != null ? result.toString() : "null",
+                "unknown",
+                "unknown",
+                "unknown",
+                "SUCCESS"
+            );
 
-            // 保存操作日志
-            operationLogRepository.insert(operationLog);
-
-            logger.debug("操作完成: {}.{}, 结果: {}", className, methodName, result);
+            logger.debug("操作成功: {}.{}, 返回: {}", className, methodName, result);
         } catch (Exception e) {
             logger.error("记录操作日志失败", e);
         }
     }
 
     /**
-     * 异常通知：方法抛出异常后记录日志
+     * 异常通知：方法抛出异常后记录日志到 Elasticsearch
      */
     @AfterThrowing(pointcut = "controllerPointcut() || servicePointcut() || modulePointcut()", throwing = "exception")
     public void doAfterThrowing(JoinPoint joinPoint, Throwable exception) {
@@ -136,16 +141,16 @@ public class OperationLogAspect {
             String className = joinPoint.getTarget().getClass().getName();
             String methodName = method.getName();
 
-            // 记录操作日志
-            OperationLog operationLog = new OperationLog();
-            operationLog.setOperationType("METHOD_EXCEPTION");
-            operationLog.setOperationDescription(className + "." + methodName);
-            operationLog.setOperationTime(LocalDateTime.now());
-            operationLog.setOperationResult(exception.getMessage());
-            operationLog.setOperationStatus("FAILED");
-
-            // 保存操作日志
-            operationLogRepository.insert(operationLog);
+            // 只记录到 Elasticsearch
+            logService.logOperation(
+                "METHOD_EXCEPTION",
+                className + "." + methodName,
+                exception.getMessage(),
+                "unknown",
+                "unknown",
+                "unknown",
+                "FAILED"
+            );
 
             logger.error("操作异常: {}.{}, 异常: {}", className, methodName, exception.getMessage());
         } catch (Exception e) {
@@ -154,7 +159,7 @@ public class OperationLogAspect {
     }
 
     /**
-     * 获取请求的IP地址
+     * 获取客户端IP地址
      */
     private String getIpAddress(HttpServletRequest request) {
         String ip = request.getHeader("X-Forwarded-For");
@@ -163,12 +168,6 @@ public class OperationLogAspect {
         }
         if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
             ip = request.getHeader("WL-Proxy-Client-IP");
-        }
-        if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getHeader("HTTP_CLIENT_IP");
-        }
-        if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getHeader("HTTP_X_FORWARDED_FOR");
         }
         if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
             ip = request.getRemoteAddr();

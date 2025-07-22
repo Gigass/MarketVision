@@ -3,7 +3,7 @@ package com.gigass.trading.controller;
 import com.gigass.trading.service.SignalProcessingService;
 import com.gigass.trading.dto.SignalFilterResult;
 import com.gigass.trading.entity.HotSearchRecord;
-import com.gigass.trading.repository.HotSearchRecordRepository;
+import com.gigass.trading.mapper.HotSearchRecordRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
