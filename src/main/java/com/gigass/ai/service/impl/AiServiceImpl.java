@@ -15,6 +15,8 @@ import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.vertexai.gemini.VertexAiGeminiChatModel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Service
 public class AiServiceImpl implements AiService {
@@ -36,21 +38,52 @@ public class AiServiceImpl implements AiService {
 
     @Override
     public ChatResponse chat(ChatRequest request) {
+        long startTime = System.currentTimeMillis();
+        AiCallLog callLog = new AiCallLog();
+        callLog.setId(UUID.randomUUID().toString());
+        callLog.setTimestamp(LocalDateTime.now());
+        callLog.setModelType(request.getModel());
+        callLog.setPrompt(request.getMessage());
+        
         try {
             AiModelEnum modelEnum = AiModelEnum.fromCode(request.getModel());
             ChatModel chatModel = getChatModel(modelEnum);
             
             if (chatModel == null) {
+                long responseTime = System.currentTimeMillis() - startTime;
+                callLog.setStatus("FAILED");
+                callLog.setErrorMessage("模型 " + request.getModel() + " 未配置或不可用");
+                callLog.setResponseTimeMs(responseTime);
+                callLog.setModelName(getModelName(modelEnum));
+                aiCallLogRepository.save(callLog);
+                
                 return new ChatResponse("模型 " + request.getModel() + " 未配置或不可用");
             }
             
             Prompt prompt = new Prompt(request.getMessage());
             String response = chatModel.call(prompt).getResult().getOutput().getContent();
             
+            long responseTime = System.currentTimeMillis() - startTime;
+            callLog.setResponse(response);
+            callLog.setResponseTimeMs(responseTime);
+            callLog.setStatus("SUCCESS");
+            callLog.setModelName(getModelName(modelEnum));
+            callLog.setPromptTokens(estimateTokens(request.getMessage()));
+            callLog.setCompletionTokens(estimateTokens(response));
+            callLog.setTotalTokens(callLog.getPromptTokens() + callLog.getCompletionTokens());
+            
+            aiCallLogRepository.save(callLog);
             logger.info("AI响应成功，模型: {}, 消息长度: {}", request.getModel(), response.length());
             return new ChatResponse(response, request.getModel());
             
         } catch (Exception e) {
+            long responseTime = System.currentTimeMillis() - startTime;
+            callLog.setStatus("FAILED");
+            callLog.setErrorMessage(e.getMessage());
+            callLog.setResponseTimeMs(responseTime);
+            callLog.setModelName(getModelName(AiModelEnum.fromCode(request.getModel())));
+            
+            aiCallLogRepository.save(callLog);
             logger.error("AI调用失败: {}", e.getMessage(), e);
             return new ChatResponse("AI调用失败: " + e.getMessage());
         }
@@ -58,10 +91,42 @@ public class AiServiceImpl implements AiService {
 
     @Override
     public boolean isModelSupported(String model) {
+        long startTime = System.currentTimeMillis();
+        AiCallLog callLog = new AiCallLog();
+        callLog.setId(UUID.randomUUID().toString());
+        callLog.setTimestamp(LocalDateTime.now());
+        callLog.setModelType(model);
+        callLog.setPrompt("模型支持检查");
+        
         try {
             AiModelEnum modelEnum = AiModelEnum.fromCode(model);
-            return getChatModel(modelEnum) != null;
+            boolean supported = getChatModel(modelEnum) != null;
+            
+            long responseTime = System.currentTimeMillis() - startTime;
+            callLog.setResponse("模型支持: " + supported);
+            callLog.setResponseTimeMs(responseTime);
+            callLog.setStatus("SUCCESS");
+            callLog.setModelName(getModelName(modelEnum));
+            
+            aiCallLogRepository.save(callLog);
+            return supported;
         } catch (IllegalArgumentException e) {
+            long responseTime = System.currentTimeMillis() - startTime;
+            callLog.setStatus("FAILED");
+            callLog.setErrorMessage("不支持的模型: " + model);
+            callLog.setResponseTimeMs(responseTime);
+            callLog.setResponse("false");
+            
+            aiCallLogRepository.save(callLog);
+            return false;
+        } catch (Exception e) {
+            long responseTime = System.currentTimeMillis() - startTime;
+            callLog.setStatus("FAILED");
+            callLog.setErrorMessage(e.getMessage());
+            callLog.setResponseTimeMs(responseTime);
+            
+            aiCallLogRepository.save(callLog);
+            logger.error("检查模型支持失败: {}", e.getMessage(), e);
             return false;
         }
     }
@@ -121,5 +186,14 @@ public class AiServiceImpl implements AiService {
             case GEMINI -> "[满血伪流]gemini-2.5-pro-search";
             case CLAUDE -> "claude-3-sonnet";
         };
+    }
+
+    // 添加 token 估算方法
+    private Integer estimateTokens(String text) {
+        if (text == null) return 0;
+        // 简单估算：中文按字符数，英文按单词数*1.3
+        int chineseChars = text.replaceAll("[^\\u4e00-\\u9fa5]", "").length();
+        int englishWords = text.replaceAll("[\\u4e00-\\u9fa5]", "").split("\\s+").length;
+        return chineseChars + (int)(englishWords * 1.3);
     }
 }

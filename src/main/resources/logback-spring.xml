@@ -1,63 +1,53 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
-    
-    <!-- 控制台输出 - 简化格式 -->
+    <!-- 控制台输出 -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
-        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>INFO</level>
-        </filter>
         <encoder>
-            <pattern>%d{HH:mm:ss} %-5level %logger{20} - %msg%n</pattern>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
         </encoder>
     </appender>
-    
-    <!-- Elasticsearch 输出 -->
-    <appender name="ELASTICSEARCH" class="com.internetitem.logback.elasticsearch.ElasticsearchAppender">
-        <url>http://localhost:9200/_bulk</url>
-        <index>market-vision-logs-%date{yyyy-MM-dd}</index>
-        <!-- 移除 type 配置，ES 8.x 不再支持 -->
-        <headers>
-            <header>
-                <name>Content-Type</name>
-                <value>application/json</value>
-            </header>
-        </headers>
-        <loggerName>true</loggerName>
-        <severityField>level</severityField>
-        <hostField>host</hostField>
-        <timestampField>@timestamp</timestampField>
-        <includeCallerData>true</includeCallerData>
-        <customFields>{"application":"market-vision"}</customFields>
-        <maxQueueSize>104857600</maxQueueSize>
-        <maxElasticsearchBulkSize>100</maxElasticsearchBulkSize>
-        <maxFlushInactivityTime>30</maxFlushInactivityTime>
+
+    <!-- 文件输出 - 所有日志 -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/market-vision.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>logs/market-vision.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <maxFileSize>100MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
     </appender>
-    
-    <!-- 异步 Elasticsearch 输出 -->
-    <appender name="ASYNC_ELASTICSEARCH" class="ch.qos.logback.classic.AsyncAppender">
-        <appender-ref ref="ELASTICSEARCH"/>
-        <queueSize>1024</queueSize>
-        <discardingThreshold>0</discardingThreshold>
-        <includeCallerData>true</includeCallerData>
+
+    <!-- 错误日志单独文件 -->
+    <appender name="ERROR_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/market-vision-error.log</file>
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>ERROR</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>logs/market-vision-error.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
     </appender>
-    
-    <!-- Root Logger -->
+
+    <!-- 根日志级别 -->
     <root level="INFO">
         <appender-ref ref="CONSOLE"/>
-        <!-- 临时禁用ES输出，避免日志混乱 -->
-        <!-- <appender-ref ref="ASYNC_ELASTICSEARCH"/> -->
+        <appender-ref ref="FILE"/>
+        <appender-ref ref="ERROR_FILE"/>
     </root>
-    
-    <!-- 应用特定日志级别 -->
-    <logger name="com.gigass" level="INFO"/>
-    <logger name="com.gigass.trading.repository" level="INFO"/>
-    <logger name="com.internetitem.logback.elasticsearch" level="WARN"/>
-    <logger name="org.springframework.beans.factory" level="WARN"/>
-    <logger name="org.springframework.boot.autoconfigure" level="WARN"/>
-    
-    <!-- Elasticsearch 错误日志 -->
-    <logger name="es-error-logger" level="WARN" additivity="false">
-        <appender-ref ref="CONSOLE"/>
-    </logger>
-    
+
+    <!-- 特定包的日志级别 -->
+    <logger name="com.gigass" level="DEBUG"/>
+    <logger name="org.springframework" level="INFO"/>
+    <logger name="org.elasticsearch" level="WARN"/>
 </configuration>

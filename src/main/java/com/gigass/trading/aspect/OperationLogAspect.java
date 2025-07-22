@@ -63,38 +63,45 @@ public class OperationLogAspect {
      */
     @Before("operationLogPointcut()")
     public void doBefore(JoinPoint joinPoint) {
+        // 避免递归和测试代码
+        String className = joinPoint.getTarget().getClass().getName();
+        if (className.contains("LogService") || 
+            className.contains("Demo") || 
+            className.contains("Repository") ||
+            className.contains("Test")) {
+            return;
+        }
+
         try {
-            // 避免递归调用
-            if (joinPoint.getTarget() instanceof LogService) {
-                return;
+            String methodName="";
+            // 只记录重要的业务操作到ES
+            if (isImportantOperation(joinPoint)) {
+                // 获取请求信息
+                ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+                HttpServletRequest request = attributes != null ? attributes.getRequest() : null;
+                String ip = request != null ? getIpAddress(request) : "unknown";
+                String url = request != null ? request.getRequestURL().toString() : "unknown";
+                String httpMethod = request != null ? request.getMethod() : "unknown";
+
+                // 获取方法签名
+                MethodSignature signature = (MethodSignature) joinPoint.getSignature();
+                Method method = signature.getMethod();
+                 methodName = method.getName();
+                Object[] args = joinPoint.getArgs();
+
+                logService.logOperation(
+                    "METHOD_CALL",
+                    className + "." + methodName,
+                    Arrays.toString(args),
+                    ip,
+                    url,
+                    httpMethod,
+                    "STARTED"
+                );
             }
+            // 控制台日志降级为TRACE，减少输出
+            logger.trace("操作开始: {}.{}", className, methodName);
 
-            // 获取请求信息
-            ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-            HttpServletRequest request = attributes != null ? attributes.getRequest() : null;
-            String ip = request != null ? getIpAddress(request) : "unknown";
-            String url = request != null ? request.getRequestURL().toString() : "unknown";
-            String httpMethod = request != null ? request.getMethod() : "unknown";
-
-            // 获取方法签名
-            MethodSignature signature = (MethodSignature) joinPoint.getSignature();
-            Method method = signature.getMethod();
-            String className = joinPoint.getTarget().getClass().getName();
-            String methodName = method.getName();
-            Object[] args = joinPoint.getArgs();
-
-            // 只记录到 Elasticsearch
-            logService.logOperation(
-                "METHOD_CALL",
-                className + "." + methodName,
-                Arrays.toString(args),
-                ip,
-                url,
-                httpMethod,
-                "STARTED"
-            );
-
-            logger.debug("操作开始: {}.{}, 参数: {}", className, methodName, Arrays.toString(args));
         } catch (Exception e) {
             logger.error("记录操作日志失败", e);
         }
@@ -180,4 +187,16 @@ public class OperationLogAspect {
         }
         return ip;
     }
-} 
+
+    private boolean isImportantOperation(JoinPoint joinPoint) {
+        String methodName = joinPoint.getSignature().getName();
+        String className = joinPoint.getTarget().getClass().getSimpleName();
+        
+        // 只记录重要的业务方法
+        return methodName.startsWith("save") || 
+               methodName.startsWith("update") || 
+               methodName.startsWith("delete") ||
+               methodName.startsWith("create") ||
+               className.contains("Controller");
+    }
+}

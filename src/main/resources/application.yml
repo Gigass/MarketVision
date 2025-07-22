@@ -29,7 +29,7 @@ spring:
       base-url: https://max.brother99.top
       chat:
         options:
-          model: "[满血伪流]gemini-2.5-pro-search"
+          model: "[100k]gemini-2.5-pro"
     vertex:
       ai:
         gemini:
@@ -49,19 +49,14 @@ server:
 
 # 日志配置 - 减少控制台输出
 logging:
+  config: classpath:logback-spring.xml
   level:
-    root: INFO
+    com.gigass: DEBUG
     org.springframework: INFO
-    com.gigass: INFO
-    com.gigass.trading.repository: INFO
-    org.springframework.web: WARN
-    org.hibernate: WARN
-    org.springframework.boot.autoconfigure: WARN
-    org.springframework.beans.factory: WARN
-    com.internetitem.logback.elasticsearch: WARN
-  pattern:
-    console: "%d{HH:mm:ss} %-5level %logger{20} - %msg%n"
-debug: false
+    org.elasticsearch: WARN
+    org.apache.http: WARN
+  file:
+    path: logs
 
 # 热搜采集配置
 hotsearch:
@@ -106,4 +101,4 @@ demo:
   lifecycle:
     enabled: false
   ai:
-    enabled: false
+    enabled: true
