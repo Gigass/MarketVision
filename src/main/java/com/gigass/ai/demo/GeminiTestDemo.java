@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Component;
  * Gemini API 测试Demo
  */
 @Component
+@ConditionalOnProperty(name = "demo.ai.enabled", havingValue = "true", matchIfMissing = false)
 @Order(1) // 优先执行，在其他Demo之前
 public class GeminiTestDemo implements CommandLineRunner {
 

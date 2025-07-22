@@ -104,4 +104,6 @@ snowflake:
 # Demo 控制开关
 demo:
   lifecycle:
-    enabled: false  # 设为 true 时启用
+    enabled: false
+  ai:
+    enabled: false
