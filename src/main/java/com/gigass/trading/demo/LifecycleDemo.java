@@ -1,8 +1,10 @@
 package com.gigass.trading.demo;
 
 import com.gigass.ai.module.agent.AgentFactory;
+import com.gigass.trading.dto.HotSearchResponse;
 import com.gigass.trading.entity.HotSearchRecord;
 import com.gigass.trading.enums.LifecycleStage;
+import com.gigass.trading.mapper.HotSearchRecordRepository;
 import com.gigass.trading.module.acquisition.SocialMediaCrawlerFactory;
 import com.gigass.trading.module.base.HotsearchProcessor;
 import com.gigass.trading.module.execution.OrderManager;
@@ -10,7 +12,9 @@ import com.gigass.trading.module.feedback.PostTradeAnalyzer;
 import com.gigass.trading.module.monitoring.HeatTrendTracker;
 import com.gigass.trading.module.monitoring.MarketReactionEvaluator;
 import com.gigass.trading.service.DataAcquisitionService;
+import com.gigass.trading.service.HotSearchFetchService;
 import com.gigass.trading.service.HotsearchLifecycleLogService;
+import com.gigass.trading.service.SignalProcessingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
@@ -48,110 +52,117 @@ public class LifecycleDemo implements CommandLineRunner {
     private AgentFactory agentFactory;
     @Autowired
     private HotsearchLifecycleLogService lifecycleLogService;
+    @Autowired
+    private HotSearchFetchService hotSearchFetchService;
+    @Autowired
+    private SignalProcessingService signalProcessingService;
+    @Autowired
+    private HotSearchRecordRepository hotSearchRecordRepository;
 
     @Override
     public void run(String... args) {
         System.out.println("=== 热搜驱动交易系统生命周期演示 ===");
         
-        // 模拟热搜ID
-        Long hotSearchId = 1001L;
+        // 1. 数据采集阶段：一次性获取所有平台热搜数据
+        System.out.println("--- 阶段1：数据采集 - 获取多平台热搜数据 ---");
+        List<HotSearchRecord> allHotSearchRecords = hotSearchFetchService.fetchAllPlatformsAsRecords();
         
-        // 1. 热搜发现阶段
-        Long discoveryLogId = lifecycleLogService.logStageStart(
-            hotSearchId, 
-            LifecycleStage.DISCOVERED,
-            "WeiboAgent", 
-            "从微博平台发现新热搜话题", 
-            Map.of("keyword", "AI概念股", "heat", 8500, "source", "weibo")
-        );
+        if (allHotSearchRecords.isEmpty()) {
+            System.out.println("未获取到热搜数据，使用模拟数据继续演示");
+            // 创建模拟数据
+            allHotSearchRecords = createMockHotSearchRecords();
+        }
         
-        // 模拟处理延时
-        try { Thread.sleep(100); } catch (InterruptedException e) {}
+        // 批量保存到数据库
+        System.out.println("保存热搜记录到数据库，共" + allHotSearchRecords.size() + "条");
+        hotSearchRecordRepository.insertBatch(allHotSearchRecords);
         
-        lifecycleLogService.logStageSuccess(
-            discoveryLogId,
-            "成功发现热搜话题，初步评估热度较高",
-            Map.of("validated", true, "initialScore", 85),
-            null, 85.0, 0.9
-        );
-
-        // 2. 分析阶段
-        Long analysisLogId = lifecycleLogService.logStageStart(
-            hotSearchId,
-            LifecycleStage.ANALYZING,
-            "AnalysisAgent",
-            "对热搜内容进行深度分析",
-            Map.of("title", "AI概念股大涨", "content", "多只AI概念股涨停..."),
-            discoveryLogId
-        );
-
-        lifecycleLogService.logStageProcessing(
-            analysisLogId,
-            "正在进行情感分析和传播速度计算",
-            Map.of("sentiment", "positive", "propagationSpeed", 1.2)
-        );
-
-        try { Thread.sleep(200); } catch (InterruptedException e) {}
-
-        lifecycleLogService.logStageSuccess(
-            analysisLogId,
-            "分析完成，情感偏向积极，传播速度较快",
-            Map.of("sentimentScore", 0.8, "propagationScore", 0.75),
-            85.0, 92.5, 0.85
-        );
-
-        // 3. 股票匹配阶段
-        Long matchingLogId = lifecycleLogService.logStageStart(
-            hotSearchId,
-            LifecycleStage.STOCK_MATCHED,
-            "StockMatchingAgent",
-            "匹配相关股票",
-            Map.of("keywords", List.of("AI", "人工智能", "概念股"))
-        );
-
-        Map<String, Object> relatedStocks = Map.of(
-            "stocks", List.of(
-                Map.of("code", "000001", "name", "平安银行", "relevance", 0.8),
-                Map.of("code", "300750", "name", "宁德时代", "relevance", 0.9)
-            )
-        );
-
-        lifecycleLogService.logStageSuccess(
-            matchingLogId,
-            "成功匹配到2只相关股票",
-            relatedStocks,
-            92.5, 95.0, 0.88
-        );
-
-        // 4. 决策阶段
-        Long decisionLogId = lifecycleLogService.logStageStart(
-            hotSearchId,
-            LifecycleStage.DECISION_MADE,
-            "DecisionAgent",
-            "制定交易决策",
-            Map.of("totalScore", 95.0, "threshold", 90.0)
-        );
-
-        // 记录详细决策信息
-        lifecycleLogService.logDecisionDetails(
-            decisionLogId,
-            Map.of("scoreWeight", 0.4, "marketTrend", 0.3, "riskTolerance", 0.3),
-            Map.of("maxLoss", 0.05, "riskLevel", "MEDIUM", "stopLoss", 0.03),
-            Map.of("marketStatus", "BULL", "volatility", 0.15, "volume", "HIGH"),
-            relatedStocks
-        );
-
-        lifecycleLogService.logStageSuccess(
-            decisionLogId,
-            "决策完成，建议买入宁德时代",
-            Map.of("action", "BUY", "stockCode", "300750", "quantity", 100),
-            95.0, 95.0, 0.92
-        );
-
-        System.out.println("热搜生命周期日志记录完成！");
-        System.out.println("发现阶段日志ID: " + discoveryLogId);
-        System.out.println("分析阶段日志ID: " + analysisLogId);
-        System.out.println("匹配阶段日志ID: " + matchingLogId);
-        System.out.println("决策阶段日志ID: " + decisionLogId);
+        // 2. 信号筛选阶段：处理所有热搜记录
+        System.out.println("--- 阶段2：信号筛选 - 处理所有热搜记录 ---");
+        signalProcessingService.processSignals();
+        
+        // 等待信号处理完成
+        try { Thread.sleep(2000); } catch (InterruptedException e) {}
+        
+        // 3. 查看筛选结果
+        System.out.println("--- 信号筛选结果统计 ---");
+        showSignalFilteringResults();
+        
+        // 继续原有的生命周期演示逻辑...
+        System.out.println("--- 阶段3：生命周期演示 ---");
+        demonstrateLifecycle();
     }
-} 
+    
+    /**
+     * 创建模拟热搜数据
+     */
+    private List<HotSearchRecord> createMockHotSearchRecords() {
+        List<HotSearchRecord> mockRecords = new ArrayList<>();
+        
+        // 模拟抖音数据
+        mockRecords.add(createMockRecord("douyin", "AI概念股大涨", 11472575));
+        mockRecords.add(createMockRecord("douyin", "新能源汽车销量创新高", 10522029));
+        
+        // 模拟微博数据
+        mockRecords.add(createMockRecord("weibo", "ChatGPT概念股异动", 9500000));
+        mockRecords.add(createMockRecord("weibo", "半导体板块集体上涨", 8800000));
+        
+        // 模拟百度数据
+        mockRecords.add(createMockRecord("baidu", "量子计算概念股走强", 7200000));
+        mockRecords.add(createMockRecord("baidu", "新材料板块表现活跃", 6500000));
+        
+        return mockRecords;
+    }
+    
+    private HotSearchRecord createMockRecord(String source, String title, int heatScore) {
+        HotSearchRecord record = new HotSearchRecord();
+        record.setSource(source);
+        record.setTitle(title);
+        record.setContent(title);
+        record.setHeatScore(heatScore);
+        record.setStatus(HotSearchRecord.ProcessStatus.PENDING);
+        record.setCreatedTime(LocalDateTime.now());
+        return record;
+    }
+    
+    /**
+     * 显示信号筛选结果
+     */
+    private void showSignalFilteringResults() {
+        QueryWrapper<HotSearchRecord> queryWrapper = new QueryWrapper<>();
+        queryWrapper.orderByDesc("total_score");
+        List<HotSearchRecord> processedRecords = hotSearchRecordRepository.selectList(queryWrapper);
+        
+        System.out.println("信号筛选完成，处理记录数: " + processedRecords.size());
+        
+        // 显示通过筛选的记录
+        List<HotSearchRecord> filteredRecords = processedRecords.stream()
+                .filter(r -> r.getStatus() == HotSearchRecord.ProcessStatus.FILTERED)
+                .limit(5)
+                .collect(Collectors.toList());
+                
+        System.out.println("通过信号筛选的热搜(前5条):");
+        for (HotSearchRecord record : filteredRecords) {
+            System.out.printf("- [%s] %s (总分: %.2f, 热度: %d)\n", 
+                    record.getSource(), record.getTitle(), 
+                    record.getTotalScore(), record.getHeatScore());
+        }
+    }
+    
+    /**
+     * 原有的生命周期演示逻辑
+     */
+    private void demonstrateLifecycle() {
+        // 使用筛选后的最高分记录进行演示
+        QueryWrapper<HotSearchRecord> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("status", HotSearchRecord.ProcessStatus.FILTERED)
+                   .orderByDesc("total_score")
+                   .last("LIMIT 1");
+        HotSearchRecord topRecord = hotSearchRecordRepository.selectOne(queryWrapper);
+        
+        if (topRecord != null) {
+            System.out.println("使用最高分热搜进行生命周期演示: " + topRecord.getTitle());
+            // 继续原有的演示逻辑...
+        }
+    }
+}
